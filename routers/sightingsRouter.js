@@ -11,6 +11,22 @@ class SightingsRouter {
     router.get("/:sightingId", this.controller.getOne.bind(this.controller));
     router.post("/", this.controller.insertOne.bind(this.controller));
     router.put("/:sightingId", this.controller.updateOne.bind(this.controller));
+    router.get(
+      "/:sightingId/comments",
+      this.controller.getComments.bind(this.controller)
+    );
+    router.post(
+      "/:sightingId/comments",
+      this.controller.addComment.bind(this.controller)
+    );
+    router.get(
+      "/:sightingId/likes",
+      this.controller.getLikes.bind(this.controller)
+    );
+    router.post(
+      "/:sightingId/likes",
+      this.controller.addLikes.bind(this.controller)
+    );
     return router;
   }
 }
