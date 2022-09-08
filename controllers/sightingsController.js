@@ -1,10 +1,13 @@
+const category = require("../db/models/category");
 const BaseController = require("./baseController");
+const sequelize = require("sequelize");
 
 class SightingsController extends BaseController {
-  constructor(model, commentModel, likesModel) {
+  constructor(model, commentModel, likesModel, sightingCategoryModel) {
     super(model);
     this.commentModel = commentModel;
     this.likesModel = likesModel;
+    this.sightingCategoryModel = sightingCategoryModel;
   }
 
   // Retrieve specific sighting
@@ -19,7 +22,8 @@ class SightingsController extends BaseController {
   }
   // add sighting
   async insertOne(req, res) {
-    const { date, location, notes } = req.body;
+    console.log(req.body);
+    const { date, location, notes, categories } = req.body;
     try {
       const newSighting = await this.model.create({
         date: date,
@@ -28,7 +32,15 @@ class SightingsController extends BaseController {
         createdAt: new Date(),
         updatedAt: new Date(),
       });
+      console.log(categories);
+      const newSightingCategories = categories.forEach((category) => {
+        let newSightingCategory = this.sightingCategoryModel.create({
+          sightingId: newSighting.id,
+          categoryId: category.value,
+        });
+      });
       return res.json(newSighting);
+      // return res.json(newSightingCategory);
     } catch (err) {
       console.log(err);
       return res.status(404).json({ error: true, msg: err });
@@ -37,7 +49,9 @@ class SightingsController extends BaseController {
   //update/edit sighting
   async updateOne(req, res) {
     const { sightingId } = req.params;
-    const { date, location, notes } = req.body;
+    const { date, location, notes, categories, categoryCount, selectedCount } =
+      req.body;
+    console.log(req.body);
     try {
       const sighting = await this.model.findByPk(sightingId);
       await sighting.update({
@@ -47,6 +61,21 @@ class SightingsController extends BaseController {
         updatedAt: new Date(),
       });
       await sighting.save();
+
+      //if sighting has no prior category, add category (for seeded data)
+      if (selectedCount > 0)
+        await this.sightingCategoryModel.destroy({
+          where: {
+            sightingId: sightingId,
+          },
+        });
+      const updatedCategories = categories.forEach((category) => {
+        let cat = this.sightingCategoryModel.create({
+          categoryId: category.value,
+          sightingId: sightingId,
+        });
+      });
+
       return res.json(sighting);
     } catch (err) {
       console.log(err);
@@ -61,6 +90,7 @@ class SightingsController extends BaseController {
         where: {
           sighting_id: sightingId,
         },
+        order: sequelize.col("id"),
       });
       return res.json(comments);
     } catch (err) {
@@ -83,6 +113,30 @@ class SightingsController extends BaseController {
       });
       await newComment.save();
       return res.json(newComment);
+    } catch (err) {
+      console.log(err);
+      return res.status(404).json({ error: true, msg: err });
+    }
+  }
+  // edit comment
+  async updateComments(req, res) {
+    const { commentId, content } = req.body;
+    console.log(commentId);
+    try {
+      const comment = await this.commentModel.findByPk(commentId);
+      await this.commentModel.update(
+        {
+          content: content,
+          updatedAt: new Date(),
+        },
+        {
+          where: {
+            id: commentId,
+          },
+        }
+      );
+      await comment.save();
+      res.json(comment);
     } catch (err) {
       console.log(err);
       return res.status(404).json({ error: true, msg: err });

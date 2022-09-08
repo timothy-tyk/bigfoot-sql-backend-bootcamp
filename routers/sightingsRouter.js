@@ -19,6 +19,10 @@ class SightingsRouter {
       "/:sightingId/comments",
       this.controller.addComment.bind(this.controller)
     );
+    router.put(
+      "/:sightingId/comments",
+      this.controller.updateComments.bind(this.controller)
+    );
     router.get(
       "/:sightingId/likes",
       this.controller.getLikes.bind(this.controller)
@@ -27,6 +31,7 @@ class SightingsRouter {
       "/:sightingId/likes",
       this.controller.addLikes.bind(this.controller)
     );
+
     return router;
   }
 }
